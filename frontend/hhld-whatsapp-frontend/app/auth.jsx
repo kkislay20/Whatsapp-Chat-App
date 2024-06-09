@@ -2,17 +2,18 @@
 import axios from 'axios';
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from './zustand/useAuthStore';
 
 const Auth = () => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
+    const {authName, setAuthName} = useAuthStore();
     const router = useRouter();
 
     const signUpFunc = async (event) => {
         event.preventDefault();
- 
         try {
-            const res = await axios.post('http://localhost:5000/auth/signup', {
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_AUTH_HOST}/auth/signup`, {
                 username: userName,
                 password: password
             }, {
@@ -21,6 +22,7 @@ const Auth = () => {
             if(res.data.message === "Username already exists!") {
                 alert('Username already exists');
             } else {
+                setAuthName(userName);
                 router.replace('/chat');
             }
         } catch (error) {
@@ -32,16 +34,16 @@ const Auth = () => {
         event.preventDefault();
  
         try {
-            const res = await axios.post('http://localhost:5000/auth/signup', {
+            const res = await axios.post('http://localhost:5000/auth/login', {
                 username: userName,
                 password: password
             }, {
                 withCredentials: true
             })
-            
+            setAuthName(userName);
             router.replace('/chat');
         } catch (error) {
-            console.log("Error in signup function : ", error.message);
+            console.log("Error in login function : ", error.message);
         }
     }
  

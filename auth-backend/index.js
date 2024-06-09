@@ -1,5 +1,4 @@
 import express from "express"
-import http from "http"
 import dotenv from "dotenv"
 import connectToMongoDB from "./db/connectToMongoDB.js"
 import authRouter from './routes/auth.route.js'
@@ -18,7 +17,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
     credentials: true,
-    origin: "http://localhost:3000"
+    origin: ["http://localhost:3000", "http://localhost:3001"]
 }));
 
 app.use('/auth', authRouter);
@@ -30,6 +29,6 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, (req, res) => {
     connectToMongoDB();
-    console.log(`Server is running at ${PORT}`);
+    console.log(`AuthBackend Server is running at ${PORT}`);
 })
  
