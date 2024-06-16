@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import dotenv from "dotenv"
 import cors from "cors";
 import msgRouter from './routes/msgs.route.js';
-import connectToMongoDB from "./db/connectTOMongoDB.js";
+import connectToMongoDB from "./db/connectToMongoDB.js";
 import { addMsgToConversation } from "./controllers/messages.controller.js";
 
 

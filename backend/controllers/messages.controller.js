@@ -22,18 +22,18 @@ export const addMsgToConversation = async(participants, message) => {
 // Get messages for a conversation identified by participants
 const getMsgsOfConversation = async(req, res) => {
     try{
-        const {sender, receiver} = req;
+        const {sender, receiver} = req.query;
         const participants = [sender, receiver];
-
+        console.log(sender, receiver);
         const conversation = await conversationModel.findOne({
             "users": { $all : participants }
         });
 
         if(!conversation) {
             console.log('Conversation not found');
-            return res.status(200).send();
+            return res.status(200).json([]);
         } 
-        return res.json(conversation.msgs);
+        return res.json(conversation.messages);
     } catch(error) {
         console.log('Error fetchings conversation messages: ' + error.message);
         res.status(500).json({ error: 'Server error' });
