@@ -1,17 +1,19 @@
 'use client'
-import { useState, useEffect } from 'react';
 import io from "socket.io-client";
+import axios from 'axios';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../zustand/useAuthStore';
 import { useUsersStore } from '../zustand/useUsersStore';
-import axios from 'axios';
+import { useChatMsgsStore } from "../zustand/useChatMsgsStore";
+import { usechatReceiverStore } from "../zustand/useChatReceiver";
 
 const Chat = () => {
-    const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [socket, setSocket] = useState(null);
     const { authName } = useAuthStore();
     const { users, setUsers } = useUsersStore();
-    const { receiver, setReceiver } = useUsersStore();
+    const { chatMsgs, updateChatMsgs } = useChatMsgsStore();
+    const { chatReceiver, updateChatReceiver } = usechatReceiverStore();
 
     const getUserData = async () => {
         const res = await axios.get(`${process.env.NEXT_PUBLIC_AUTH_HOST}/users`, {
@@ -34,14 +36,39 @@ const Chat = () => {
 
         // Listen for incoming msgs
         newSocket.on('chat msg', msg => {
-            setMessages([...chatMsgs, msg]);
+            updateChatMsgs([...chatMsgs, msg]);
         });
 
         getUserData();
 
         // Clean up function
         return () => newSocket.close();
-    }, [receiver]);
+    }, []);
+
+    useEffect(() => {
+        console.log("Second Use Effect called!!!!");
+        const getMsgs = async () => {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_BE_HOST}/msgs`, 
+                {
+                    params: {
+                        'sender': authName,
+                        'receiver': chatReceiver
+                    }
+                }, {
+                    withCredentials: true
+                });
+            if(res.data.length !== 0) {
+                console.log("Messages received!!!!");
+                updateChatMsgs(res.data);
+            } else {
+                updateChatMsgs([]);
+            }
+        }
+
+        if(chatReceiver) {
+            getMsgs();
+        }
+    }, [chatReceiver]);
 
 
     const sendMessage = (e) => {
@@ -49,19 +76,18 @@ const Chat = () => {
         const msgToBeSent = {
             text: inputValue.trim(),
             sender: authName,
-            receiver: receiver,
+            receiver: chatReceiver,
         };
 
         if (inputValue.trim() !== '' && socket) {
-            setMessages([...chatMsgs, msgToBeSent]);
-            // console.log('set messages - ', JSON.stringify(messages));
+            updateChatMsgs([...chatMsgs, msgToBeSent]);
             socket.emit('chat msg', msgToBeSent);
             setInputValue('');
         }
     };
 
     const setChatReceiver = (user) => {
-        setReceiver(user.username);
+        updateChatReceiver(user.username);
         console.log("Current receiver - " + user.username);
         // get chats of this user and authname
     }
@@ -78,16 +104,16 @@ const Chat = () => {
             <div className='w-4/5 flex flex-col'>
                 <div className='1/5'>
                     <h1>
-                        {authName} is chatting with
+                        {authName} is chatting with {chatReceiver}
                     </h1>
                 </div>
                 <div className='msgs-container h-3/5 overflow-scroll'>
-                    {messages.map((message, index) => (
+                    {chatMsgs.map((message, index) => (
                         <div key={index} className={message.sender == authName ? "flex justify-end" : "flex"}>
                             <div className="flex w-1/2 m-4 gap-2.5">
                                 <div className="flex flex-col w-full leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
                                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">Bonnie Green</span>
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{authName}</span>
                                         <span className="text-sm font-normal text-gray-500 dark:text-gray-400">11:46</span>
                                     </div>
                                     <p className="text-sm font-normal py-2.5 text-gray-900 dark:text-white">{message.text}</p>
